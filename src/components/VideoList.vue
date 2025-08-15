@@ -204,9 +204,9 @@ header h1 {
 }
 
 main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 1rem;
   padding-top: 5rem;
 }
 
@@ -238,9 +238,9 @@ main {
 
 .video-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-  margin-bottom: 2rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .video-item {
@@ -389,7 +389,8 @@ main {
 
 @media (max-width: 768px) {
   .video-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
   }
   
   header h1 {
@@ -401,7 +402,19 @@ main {
   }
   
   main {
-    padding: 1rem;
+    padding: 0.5rem;
+    padding-top: 4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .video-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  main {
+    padding: 0.25rem;
     padding-top: 4rem;
   }
 }
