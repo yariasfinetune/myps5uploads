@@ -1,6 +1,6 @@
 # Video List App
 
-A Vue.js application that fetches and displays a list of videos from an API endpoint with full-screen video viewing capabilities.
+A Vue.js application that fetches and displays a list of videos from an API endpoint with full-screen video viewing capabilities and timestamp sharing.
 
 ## Features
 
@@ -8,6 +8,7 @@ A Vue.js application that fetches and displays a list of videos from an API endp
 - Displays videos in a responsive grid layout
 - Individual video pages with full-screen viewing
 - Navigation between video list and individual videos
+- **NEW**: Timestamp sharing - share videos at specific times
 - Shows video metadata (file size, last modified date)
 - Pagination support
 - Modern, responsive UI design
@@ -18,6 +19,7 @@ A Vue.js application that fetches and displays a list of videos from an API endp
 
 - `/` - Main video list page
 - `/video/:fileKey` - Individual video player page (full-screen)
+- `/video/:fileKey/:timestamp` - Video player page starting at specific timestamp (in seconds)
 
 ## API Endpoint
 
@@ -52,6 +54,28 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## Video Sharing Features
+
+### **Timestamp Sharing**
+You can share videos at specific timestamps:
+
+1. **From Video List**: Click "Share Video" to share the video URL
+2. **From Video Player**: 
+   - Click "Share at Current Time" to share the video at the current playback position
+   - Click "Copy Share Link" to copy the current URL to clipboard
+3. **Direct URL Access**: Access URLs like:
+   - `https://ps5.jsarias.me/video/[encoded-key]` (start from beginning)
+   - `https://ps5.jsarias.me/video/[encoded-key]/120` (start at 2 minutes)
+
+### **Share Examples**
+- **Video from start**: `https://ps5.jsarias.me/video/bWVkaWEtZmlsZXMvRUFfU1BPUlRTX0ZDMjVfMjAyNV8wOF8xNF8xOF8wMV8wOS53ZWJt`
+- **Video at 2:30**: `https://ps5.jsarias.me/video/bWVkaWEtZmlsZXMvRUFfU1BPUlRTX0ZDMjVfMjAyNV8wOF8xNF8xOF8wMV8wOS53ZWJt/150`
+
+### **Sharing Methods**
+- **Native Share**: Uses Web Share API on supported devices (mobile)
+- **Clipboard Copy**: Fallback for desktop browsers
+- **Social Media**: Copy and paste URLs to share on any platform
 
 ## Deployment
 
@@ -96,7 +120,7 @@ video-list-app/
 ├── src/
 │   ├── components/
 │   │   ├── VideoList.vue      # Main video list component
-│   │   └── VideoPlayer.vue    # Full-screen video player
+│   │   └── VideoPlayer.vue    # Full-screen video player with timestamp support
 │   ├── App.vue                # Main app component with router
 │   ├── main.js                # Application entry point
 │   └── router.js              # Vue Router configuration
@@ -122,6 +146,7 @@ video-list-app/
 2. **Video Player Page**: Click on any video to view it in full-screen mode
 3. **Navigation**: Use the "Back to Videos" button to return to the main list
 4. **Full-Screen Mode**: Use the fullscreen button in the video player for immersive viewing
+5. **Timestamp Sharing**: Share videos at specific times using the share buttons
 
 ## Notes
 
@@ -130,3 +155,4 @@ video-list-app/
 - Videos are displayed with HTML5 video tags with controls
 - The UI is fully responsive and works on mobile devices
 - Video keys are base64-encoded for safe routing
+- Timestamps are in seconds and automatically seek to the specified time

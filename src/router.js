@@ -13,6 +13,12 @@ const routes = [
     name: 'VideoPlayer',
     component: VideoPlayer,
     props: true
+  },
+  {
+    path: '/video/:fileKey/:timestamp',
+    name: 'VideoPlayerWithTimestamp',
+    component: VideoPlayer,
+    props: true
   }
 ]
 

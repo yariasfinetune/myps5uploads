@@ -30,6 +30,7 @@
           class="fullscreen-video"
           @error="handleVideoError"
           @loadeddata="handleVideoLoaded"
+          @timeupdate="handleTimeUpdate"
         >
           Your browser does not support the video tag.
         </video>
@@ -40,8 +41,12 @@
             <div class="video-info">
               <h2>{{ videoTitle }}</h2>
               <p class="video-url">{{ videoUrl }}</p>
+              <p class="current-time">Current Time: {{ formatTime(currentTime) }}</p>
             </div>
             <div class="control-buttons">
+              <button @click="shareCurrentTime" class="control-btn">
+                Share at {{ formatTime(currentTime) }}
+              </button>
               <button @click="toggleFullscreen" class="control-btn">
                 {{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}
               </button>
@@ -55,7 +60,7 @@
     </div>
 
     <!-- Video Details Panel -->
-    <!-- <div class="video-details" v-if="!isFullscreen">
+    <div class="video-details" v-if="!isFullscreen">
       <div class="details-content">
         <h3>Video Details</h3>
         <div class="detail-item">
@@ -68,8 +73,30 @@
         <div class="detail-item">
           <strong>Key:</strong> {{ decodedKey }}
         </div>
+        <div class="detail-item" v-if="timestamp">
+          <strong>Timestamp:</strong> {{ formatTime(timestamp) }}
+        </div>
+        <div class="detail-item">
+          <strong>Current Time:</strong> {{ formatTime(currentTime) }}
+        </div>
+        <div class="detail-item">
+          <strong>Share Link:</strong>
+          <div class="share-links">
+            <button @click="shareCurrentTime" class="share-btn">
+              Share at Current Time
+            </button>
+            <button @click="copyShareLink" class="share-btn">
+              Copy Share Link
+            </button>
+          </div>
+        </div>
       </div>
-    </div> -->
+    </div>
+
+    <!-- Tooltip -->
+    <div v-if="showTooltip" class="tooltip" :class="{ 'tooltip-show': showTooltip }">
+      {{ tooltipMessage }}
+    </div>
   </div>
 </template>
 
@@ -80,6 +107,10 @@ export default {
     fileKey: {
       type: String,
       required: true
+    },
+    timestamp: {
+      type: [String, Number],
+      default: null
     }
   },
   data() {
@@ -87,7 +118,10 @@ export default {
       loading: true,
       error: null,
       showControls: false,
-      isFullscreen: false
+      isFullscreen: false,
+      currentTime: 0,
+      showTooltip: false,
+      tooltipMessage: ''
     }
   },
   computed: {
@@ -111,6 +145,11 @@ export default {
     },
     videoUrl() {
       return `https://ps5.jsarias.me/${this.decodedKey}`
+    },
+    parsedTimestamp() {
+      if (!this.timestamp) return null
+      const time = parseFloat(this.timestamp)
+      return isNaN(time) ? null : time
     }
   },
   mounted() {
@@ -133,11 +172,100 @@ export default {
     
     handleVideoLoaded() {
       this.loading = false
+      
+      // Seek to timestamp if provided
+      if (this.parsedTimestamp !== null) {
+        this.$nextTick(() => {
+          const video = this.$refs.videoElement
+          if (video) {
+            video.currentTime = this.parsedTimestamp
+          }
+        })
+      }
     },
     
     handleVideoError() {
       this.loading = false
       this.error = 'Failed to load video. Please check the URL and try again.'
+    },
+    
+    handleTimeUpdate() {
+      const video = this.$refs.videoElement
+      if (video) {
+        this.currentTime = video.currentTime
+      }
+    },
+    
+    formatTime(seconds) {
+      if (!seconds || isNaN(seconds)) return '0:00'
+      
+      const hours = Math.floor(seconds / 3600)
+      const minutes = Math.floor((seconds % 3600) / 60)
+      const secs = Math.floor(seconds % 60)
+      
+      if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+      } else {
+        return `${minutes}:${secs.toString().padStart(2, '0')}`
+      }
+    },
+    
+    shareCurrentTime() {
+      const currentTime = Math.floor(this.currentTime)
+      const shareUrl = `${window.location.origin}/video/${this.fileKey}/${currentTime}`
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        this.showTooltipMessage('Share link copied to clipboard!')
+      }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea')
+        textArea.value = shareUrl
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+        this.showTooltipMessage('Share link copied to clipboard!')
+      })
+    },
+    
+    copyShareLink() {
+      const shareUrl = this.parsedTimestamp !== null 
+        ? `${window.location.origin}/video/${this.fileKey}/${this.parsedTimestamp}`
+        : `${window.location.origin}/video/${this.fileKey}`
+      
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        this.showTooltipMessage('Share link copied to clipboard!')
+      }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea')
+        textArea.value = shareUrl
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textArea)
+        this.showTooltipMessage('Share link copied to clipboard!')
+      })
+    },
+    
+    showTooltipMessage(message) {
+      this.tooltipMessage = message
+      this.showTooltip = true
+      
+      // Position tooltip in the center of the screen
+      this.$nextTick(() => {
+        const tooltip = document.querySelector('.tooltip')
+        if (tooltip) {
+          tooltip.style.left = '50%'
+          tooltip.style.top = '50%'
+          tooltip.style.transform = 'translate(-50%, -50%)'
+        }
+      })
+      
+      // Hide tooltip after 2 seconds
+      setTimeout(() => {
+        this.showTooltip = false
+      }, 2000)
     },
     
     retryLoad() {
@@ -339,14 +467,22 @@ export default {
 .video-url {
   color: #ccc;
   font-size: 0.9rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   word-break: break-all;
+}
+
+.current-time {
+  color: #667eea;
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  font-weight: 500;
 }
 
 .control-buttons {
   display: flex;
   gap: 1rem;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .control-btn {
@@ -401,6 +537,27 @@ export default {
   text-decoration: underline;
 }
 
+.share-links {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.share-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.3s ease;
+}
+
+.share-btn:hover {
+  background: #5a6fd8;
+}
+
 /* Fullscreen styles */
 .video-player-page:fullscreen .video-header,
 .video-player-page:-webkit-full-screen .video-header,
@@ -425,6 +582,29 @@ export default {
 .video-player-page:-moz-full-screen .fullscreen-video {
   max-height: 100vh;
   border-radius: 0;
+}
+
+/* Tooltip styles */
+.tooltip {
+  position: fixed;
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  z-index: 10000;
+  opacity: 0;
+  transition: all 0.3s ease-in-out;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.tooltip-show {
+  opacity: 1;
 }
 
 @media (max-width: 768px) {
@@ -456,6 +636,10 @@ export default {
   
   .video-details {
     padding: 1rem;
+  }
+  
+  .share-links {
+    flex-direction: column;
   }
 }
 </style>

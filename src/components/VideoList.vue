@@ -38,7 +38,10 @@
             <div class="video-info">
               <p><strong>Size:</strong> {{ formatFileSize(video.Size) }}</p>
               <p><strong>Upload Date:</strong> {{ formatDate(video.LastModified) }}</p>
-              <button @click="goToVideo(video.Key)" class="watch-btn">Watch Full Screen</button>
+              <div class="video-actions">
+                <button @click="goToVideo(video.Key)" class="watch-btn">Watch Full Screen</button>
+                <button @click="shareVideo(video.Key)" class="share-btn">Share Video</button>
+              </div>
             </div>
           </div>
         </div>
@@ -151,6 +154,26 @@ export default {
       // Use base64 encoding to safely pass the key in the URL
       const encodedKey = btoa(key)
       this.$router.push(`/video/${encodedKey}`)
+    },
+
+    shareVideo(key) {
+      const videoUrl = this.getVideoUrl(key);
+      if (navigator.share) {
+        navigator.share({
+          title: this.getVideoTitle(key),
+          text: `Check out this video: ${videoUrl}`,
+          url: videoUrl
+        })
+        .then(() => {
+          console.log('Video shared successfully');
+        })
+        .catch((error) => {
+          console.error('Error sharing video:', error);
+        });
+      } else {
+        alert('Web Share API is not supported in your browser.');
+        console.warn('Web Share API is not supported in your browser.');
+      }
     }
   }
 }
@@ -305,20 +328,29 @@ main {
   color: #6c757d;
 }
 
-.watch-btn {
+.video-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.watch-btn, .share-btn {
   background: #667eea;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 5px;
   cursor: pointer;
-  margin-top: 0.5rem;
   font-size: 0.9rem;
   transition: background 0.3s ease;
 }
 
 .watch-btn:hover {
   background: #5a6fd8;
+}
+
+.share-btn:hover {
+  background: #45aaf2;
 }
 
 .pagination {
