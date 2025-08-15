@@ -6,8 +6,8 @@ A Vue.js application that fetches and displays a list of videos from an API endp
 
 - Fetches video data from the specified API endpoint
 - Displays videos in a responsive grid layout
-- **NEW**: Individual video pages with full-screen viewing
-- **NEW**: Navigation between video list and individual videos
+- Individual video pages with full-screen viewing
+- Navigation between video list and individual videos
 - Shows video metadata (file size, last modified date)
 - Pagination support
 - Modern, responsive UI design
@@ -17,7 +17,7 @@ A Vue.js application that fetches and displays a list of videos from an API endp
 ## Routes
 
 - `/` - Main video list page
-- `/video/:key` - Individual video player page (full-screen)
+- `/video/:fileKey` - Individual video player page (full-screen)
 
 ## API Endpoint
 
@@ -53,6 +53,42 @@ npm run dev
 npm run build
 ```
 
+## Deployment
+
+### Prerequisites
+- AWS CLI installed and configured with appropriate credentials
+- AWS profile named `personal` configured with access to S3 bucket
+- S3 bucket `ps5.jsarias.me` created and configured for static website hosting with public access
+
+### Deploy to S3
+```bash
+npm run deploy
+```
+
+This command will:
+1. Build the application (`npm run build`)
+2. Copy all files from `dist/` to your S3 bucket (preserves existing files)
+3. Configure proper cache headers for static assets
+4. Set up SPA routing (redirect 404s to index.html)
+
+**Note**: The deploy script uses `AWS_PROFILE=personal` for all AWS CLI commands. The bucket is configured to make all objects public by default, so no ACL flags are needed.
+
+### Manual Deployment
+If you prefer to deploy manually:
+```bash
+# Build the app
+npm run build
+
+# Copy to S3 (preserves existing files)
+AWS_PROFILE=personal aws s3 cp dist/ s3://ps5.jsarias.me/ --recursive --cache-control "max-age=31536000,public"
+
+# Upload index.html with no-cache for SPA routing
+AWS_PROFILE=personal aws s3 cp dist/index.html s3://ps5.jsarias.me/index.html --cache-control "no-cache,no-store,must-revalidate"
+
+# Configure SPA routing
+AWS_PROFILE=personal aws s3api put-bucket-website --bucket ps5.jsarias.me --website-configuration '{"IndexDocument":{"Suffix":"index.html"},"ErrorDocument":{"Key":"index.html"}}'
+```
+
 ## Project Structure
 
 ```
@@ -64,6 +100,8 @@ video-list-app/
 │   ├── App.vue                # Main app component with router
 │   ├── main.js                # Application entry point
 │   └── router.js              # Vue Router configuration
+├── scripts/
+│   └── deploy.js              # Deployment script
 ├── index.html                 # HTML template
 ├── package.json               # Dependencies and scripts
 ├── vite.config.js             # Vite configuration
@@ -91,4 +129,4 @@ video-list-app/
 - The app assumes 10 items per page for pagination calculation
 - Videos are displayed with HTML5 video tags with controls
 - The UI is fully responsive and works on mobile devices
-- Video keys are URL-encoded for safe routing
+- Video keys are base64-encoded for safe routing
