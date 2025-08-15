@@ -92,7 +92,18 @@ export default {
   },
   computed: {
     decodedKey() {
-      return decodeURIComponent(this.fileKey)
+      try {
+        // Decode the base64 encoded key
+        return atob(this.fileKey)
+      } catch (e) {
+        // If base64 decoding fails, try URL decoding as fallback
+        try {
+          return decodeURIComponent(this.fileKey)
+        } catch (e2) {
+          // If both fail, return the original key
+          return this.fileKey
+        }
+      }
     },
     videoTitle() {
       const filename = this.decodedKey.split('/').pop()

@@ -148,8 +148,8 @@ export default {
     },
     
     goToVideo(key) {
-      // Encode the key for URL safety
-      const encodedKey = encodeURIComponent(key)
+      // Use base64 encoding to safely pass the key in the URL
+      const encodedKey = btoa(key)
       this.$router.push(`/video/${encodedKey}`)
     }
   }
